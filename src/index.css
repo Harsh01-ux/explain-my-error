@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  --color-terminal-bg: #0d1117;
+  --color-terminal-text: #c9d1d9;
+  --color-terminal-border: #30363d;
+  --color-accent-green: #3fb950;
+}
+
+@layer base {
+  body {
+    @apply bg-[#0d1117] text-[#c9d1d9] font-mono min-h-screen antialiased;
+  }
+}
+
+@layer utilities {
+  .terminal-input {
+    @apply bg-[#0d1117] border border-[#30363d] rounded-sm px-4 py-3 text-[#c9d1d9] focus:outline-none focus:border-[#3fb950] w-full transition-colors;
+  }
+  
+  .btn-terminal {
+    @apply bg-[#238636] hover:bg-[#2ea043] text-white font-medium py-2 px-4 rounded-sm transition-colors border border-[rgba(240,246,252,0.1)];
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-[#0d1117] border-l border-[#30363d];
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-[#30363d] border-2 border-solid border-[#0d1117];
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[#484f58];
+  }
+}
+
+/* Animations */
+@keyframes dot-flashing {
+  0% { opacity: 1; }
+  50%, 100% { opacity: 0.2; }
+}
+.dot-flashing {
+  position: relative;
+  width: 8px;
+  height: 12px; /* Rectangle cursor shape */
+  border-radius: 0;
+  background-color: #3fb950;
+  animation: dot-flashing 1s infinite linear alternate;
+  animation-delay: 0.5s;
+}
+.dot-flashing::before, .dot-flashing::after {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  top: 0;
+}
+.dot-flashing::before {
+  left: -15px;
+  width: 8px;
+  height: 12px;
+  border-radius: 0;
+  background-color: #3fb950;
+  animation: dot-flashing 1s infinite alternate;
+  animation-delay: 0s;
+}
+.dot-flashing::after {
+  left: 15px;
+  width: 8px;
+  height: 12px;
+  border-radius: 0;
+  background-color: #3fb950;
+  animation: dot-flashing 1s infinite alternate;
+  animation-delay: 1s;
+}
