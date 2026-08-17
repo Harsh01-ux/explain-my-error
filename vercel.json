@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api/nvidia/:match*",
-      "destination": "https://integrate.api.nvidia.com/:match*"
+      "source": "/api/nvidia/(.*)",
+      "destination": "https://integrate.api.nvidia.com/$1"
     },
     {
       "source": "/(.*)",
