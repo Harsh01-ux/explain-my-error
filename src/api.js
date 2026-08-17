@@ -1,4 +1,5 @@
 export const explainError = async (errorMessage, codeSnippet, language) => {
+  // Triggering HMR to load the new .env variable
   const apiKey = import.meta.env.VITE_NVIDIA_API_KEY;
   if (!apiKey) {
     throw new Error("NVIDIA API Key is not set in environment variables (.env file). Please set VITE_NVIDIA_API_KEY.");
