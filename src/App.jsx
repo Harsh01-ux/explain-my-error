@@ -9,6 +9,7 @@ function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [codeSnippet, setCodeSnippet] = useState('');
   const [language, setLanguage] = useState('Auto-detect');
+  const [explanationStyle, setExplanationStyle] = useState('English');
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [result, setResult] = useState(null);
@@ -38,7 +39,7 @@ function App() {
     setResult(null);
 
     try {
-      const responseText = await explainError(errorMessage, codeSnippet, language);
+      const responseText = await explainError(errorMessage, codeSnippet, language, explanationStyle);
       const parsed = parseResponse(responseText);
       
       setResult(parsed);
@@ -160,21 +161,40 @@ function App() {
           
           {/* LEFT PANE: Input */}
           <div className="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-[#30363d] overflow-y-auto">
-            {/* Language Tabs */}
-            <div className="flex overflow-x-auto border-b border-[#30363d] bg-[#010409]">
-              {LANGUAGES.map(lang => (
-                <button
-                  key={lang}
-                  onClick={() => setLanguage(lang)}
-                  className={`px-4 py-2 text-[13px] border-b-2 whitespace-nowrap transition-colors ${
-                    language === lang 
-                      ? 'border-[#3fb950] text-[#c9d1d9] bg-[#0d1117]' 
-                      : 'border-transparent text-[#8b949e] hover:bg-[#21262d] hover:text-[#c9d1d9]'
-                  }`}
-                >
-                  {lang}
-                </button>
-              ))}
+            {/* Language Tabs & Toggle */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#30363d] bg-[#010409]">
+              <div className="flex overflow-x-auto">
+                {LANGUAGES.map(lang => (
+                  <button
+                    key={lang}
+                    onClick={() => setLanguage(lang)}
+                    className={`px-4 py-2 text-[13px] border-b-2 whitespace-nowrap transition-colors ${
+                      language === lang 
+                        ? 'border-[#3fb950] text-[#c9d1d9] bg-[#0d1117]' 
+                        : 'border-transparent text-[#8b949e] hover:bg-[#21262d] hover:text-[#c9d1d9]'
+                    }`}
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 md:py-0 border-t md:border-t-0 border-[#30363d] shrink-0">
+                <span className="text-[13px] text-[#8b949e] whitespace-nowrap">Explanation Style:</span>
+                <div className="flex items-center bg-[#0d1117] rounded border border-[#30363d] overflow-hidden text-[12px]">
+                  <button
+                    onClick={() => setExplanationStyle('English')}
+                    className={`px-3 py-1 ${explanationStyle === 'English' ? 'bg-[#21262d] text-[#c9d1d9]' : 'text-[#8b949e] hover:bg-[#21262d]/50'}`}
+                  >
+                    English
+                  </button>
+                  <button
+                    onClick={() => setExplanationStyle('Hinglish')}
+                    className={`px-3 py-1 border-l border-[#30363d] ${explanationStyle === 'Hinglish' ? 'bg-[#21262d] text-[#c9d1d9]' : 'text-[#8b949e] hover:bg-[#21262d]/50'}`}
+                  >
+                    Hinglish
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="p-4 flex-1 space-y-4">
