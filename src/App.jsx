@@ -11,9 +11,18 @@ function App() {
   const [language, setLanguage] = useState('Auto-detect');
   const [explanationStyle, setExplanationStyle] = useState('English');
   const [isLoading, setIsLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
   const [apiError, setApiError] = useState(null);
   const [result, setResult] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    let timer;
+    if (cooldown > 0) {
+      timer = setTimeout(() => setCooldown(c => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem('errorHistory');
@@ -59,6 +68,7 @@ function App() {
       setApiError(err.message);
     } finally {
       setIsLoading(false);
+      setCooldown(5);
     }
   };
 
@@ -94,10 +104,15 @@ function App() {
           >
             <Menu size={18} />
           </button>
-          <h1 className="text-sm font-semibold flex items-center gap-2 text-[#c9d1d9]">
-            <TerminalSquare size={16} className="text-[#3fb950]" />
-            explain-my-error ~/
-          </h1>
+          <div className="flex flex-col">
+            <h1 className="text-sm font-semibold flex items-center gap-2 text-[#c9d1d9]">
+              <TerminalSquare size={16} className="text-[#3fb950]" />
+              explain-my-error ~/
+            </h1>
+            <span className="text-[10px] text-[#8b949e] hidden md:block mt-0.5">
+              Paste your error, get a plain-English fix — no more Googling stack traces.
+            </span>
+          </div>
         </div>
       </header>
 
@@ -226,14 +241,18 @@ function App() {
             <div className="p-4 border-t border-[#30363d] bg-[#010409] flex justify-end">
               <button
                 onClick={handleExplain}
-                disabled={isLoading || !errorMessage.trim()}
-                className="btn-terminal flex items-center gap-2 text-[13px] disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading || !errorMessage.trim() || cooldown > 0}
+                className="btn-terminal flex items-center justify-center gap-2 text-[13px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-3 bg-[#3fb950] animate-pulse"></div>
                     Executing...
                   </div>
+                ) : cooldown > 0 ? (
+                  <>
+                    <Terminal size={14} /> Please wait ({cooldown}s)
+                  </>
                 ) : (
                   <>
                     <Terminal size={14} /> Run Analysis
