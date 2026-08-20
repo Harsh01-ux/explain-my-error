@@ -1,4 +1,4 @@
-export const explainError = async (errorMessage, codeSnippet, language, explanationStyle = 'English') => {
+export const generatePrompts = (errorMessage, codeSnippet, language, explanationStyle = 'English') => {
   let systemPrompt = `You are an expert debugging assistant. Your task is to explain the user's error and help them fix it.
 You MUST format your response into exactly three sections with the following exact headers (using Markdown H3 '### '):
 ### What Went Wrong
@@ -18,25 +18,19 @@ ${errorMessage}
 Code Snippet:
 ${codeSnippet || "(No code provided)"}`;
 
-  const requestBody = {
-    model: "meta/llama-3.1-70b-instruct",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ],
-    temperature: 0.2,
-    max_tokens: 1024,
-  };
+  return { systemPrompt, userPrompt };
+};
 
+const makeApiRequest = async (requestBody) => {
   let response;
 
   // In local development, we use Vite's proxy and provide the key directly.
   if (import.meta.env.DEV) {
-    const apiKey = import.meta.env.VITE_NVIDIA_API_KEY;
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
     if (!apiKey) {
-      throw new Error("NVIDIA API Key is not set in environment variables (.env file). Please set VITE_NVIDIA_API_KEY.");
+      throw new Error("Groq API Key is not set in environment variables (.env file). Please set VITE_GROQ_API_KEY.");
     }
-    response = await fetch("/api/nvidia/v1/chat/completions", {
+    response = await fetch("/api/groq/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -57,14 +51,48 @@ ${codeSnippet || "(No code provided)"}`;
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `API request failed with status ${response.status}`);
+    throw new Error(errorData?.error?.message || errorData.message || `API request failed with status ${response.status}`);
   }
 
   const data = await response.json();
   return data.choices[0]?.message?.content || "No response generated.";
 };
 
+export const explainError = async (errorMessage, codeSnippet, language, explanationStyle = 'English') => {
+  const { systemPrompt, userPrompt } = generatePrompts(errorMessage, codeSnippet, language, explanationStyle);
+
+  const requestBody = {
+    model: "qwen/qwen3.6-27b",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ],
+    temperature: 0.2,
+    max_tokens: 3500,
+  };
+
+  return await makeApiRequest(requestBody);
+};
+
+export const sendFollowUpChat = async (messages) => {
+  const requestBody = {
+    model: "qwen/qwen3.6-27b",
+    messages: messages,
+    temperature: 0.2,
+    max_tokens: 3500,
+  };
+
+  return await makeApiRequest(requestBody);
+};
+
 export const parseResponse = (text) => {
+  // Remove <think>...</think> reasoning blocks, even if unclosed
+  text = text.replace(/<think>[\s\S]*?(?:<\/think>|$)\n?/g, '');
+  
+  if (text.trim() === "") {
+    text = "The AI model was still thinking and ran out of time/tokens before it could write the final answer. Please try again.";
+  }
+
   const sections = {
     whatWentWrong: "",
     whyThisHappens: "",
@@ -76,13 +104,16 @@ export const parseResponse = (text) => {
 
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed.toLowerCase().includes("what went wrong") && line.startsWith("#")) {
+    const lowerTrimmed = trimmed.toLowerCase();
+    
+    // Check for headers (extremely tolerant: if line contains the phrase and is short, it's a header)
+    if (lowerTrimmed.includes("what went wrong") && lowerTrimmed.length < 40) {
       currentSection = "whatWentWrong";
       continue;
-    } else if (trimmed.toLowerCase().includes("why this happens") && line.startsWith("#")) {
+    } else if (lowerTrimmed.includes("why this happens") && lowerTrimmed.length < 40) {
       currentSection = "whyThisHappens";
       continue;
-    } else if (trimmed.toLowerCase().includes("how to fix it") && line.startsWith("#")) {
+    } else if (lowerTrimmed.includes("how to fix it") && lowerTrimmed.length < 40) {
       currentSection = "howToFixIt";
       continue;
     }
