@@ -4,14 +4,14 @@ export default async function handler(request, response) {
   }
 
   // Support both variable names for flexibility in Vercel settings
-  const apiKey = process.env.NVIDIA_API_KEY || process.env.VITE_NVIDIA_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 
   if (!apiKey) {
-    return response.status(500).json({ message: "NVIDIA API Key is not set in Vercel environment variables." });
+    return response.status(500).json({ message: "Gemini API Key is not set in Vercel environment variables." });
   }
 
   try {
-    const nvidiaResponse = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+    const apiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -20,16 +20,18 @@ export default async function handler(request, response) {
       body: JSON.stringify(request.body)
     });
 
-    if (!nvidiaResponse.ok) {
-      const errorData = await nvidiaResponse.json().catch(() => ({}));
-      return response.status(nvidiaResponse.status).json({ 
-        message: errorData.message || `API request failed with status ${nvidiaResponse.status}` 
+    if (!apiResponse.ok) {
+      const errorData = await apiResponse.json().catch(() => ({}));
+      return response.status(apiResponse.status).json({ 
+        message: errorData?.error?.message || errorData.message || errorData.detail || `API request failed with status ${apiResponse.status}` 
       });
     }
 
-    const data = await nvidiaResponse.json();
+    const data = await apiResponse.json();
     return response.status(200).json(data);
   } catch (error) {
     return response.status(500).json({ message: error.message });
   }
 }
+
+

@@ -1,4 +1,4 @@
-const apiKey = "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";
+const apiKey = "YOUR_API_KEY_HERE";
 
 fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
   method: "POST",

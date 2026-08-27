@@ -26,11 +26,12 @@ const makeApiRequest = async (requestBody) => {
 
   // In local development, we use Vite's proxy and provide the key directly.
   if (import.meta.env.DEV) {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    console.log("VITE_GEMINI_API_KEY is:", apiKey ? "SET (length: " + apiKey.length + ")" : "UNDEFINED");
     if (!apiKey) {
-      throw new Error("Groq API Key is not set in environment variables (.env file). Please set VITE_GROQ_API_KEY.");
+      throw new Error("Gemini API Key is not set in environment variables (.env file). Please set VITE_GEMINI_API_KEY.");
     }
-    response = await fetch("/api/groq/openai/v1/chat/completions", {
+    response = await fetch("/api/gemini/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,25 +51,38 @@ const makeApiRequest = async (requestBody) => {
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData?.error?.message || errorData.message || `API request failed with status ${response.status}`);
+    let errorData = {};
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      errorData = await response.json().catch(() => ({}));
+    }
+    const errorMessage = errorData?.error?.message || errorData.message || errorData.detail;
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+    
+    if (response.status === 404 && !import.meta.env.DEV) {
+      throw new Error("API endpoint not found. If you are running locally, make sure to use 'npm run dev' instead of preview, or deploy to Vercel for the backend functions to work.");
+    }
+    
+    throw new Error(`API request failed with status ${response.status}`);
   }
 
   const data = await response.json();
-  return data.choices[0]?.message?.content || "No response generated.";
+  return data.choices?.[0]?.message?.content || "No response generated.";
 };
 
 export const explainError = async (errorMessage, codeSnippet, language, explanationStyle = 'English') => {
   const { systemPrompt, userPrompt } = generatePrompts(errorMessage, codeSnippet, language, explanationStyle);
 
   const requestBody = {
-    model: "qwen/qwen3.6-27b",
+    model: "gemini-3.6-flash",
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt }
     ],
     temperature: 0.2,
-    max_tokens: 3500,
+    max_tokens: 1024,
   };
 
   return await makeApiRequest(requestBody);
@@ -76,10 +90,10 @@ export const explainError = async (errorMessage, codeSnippet, language, explanat
 
 export const sendFollowUpChat = async (messages) => {
   const requestBody = {
-    model: "qwen/qwen3.6-27b",
+    model: "gemini-3.6-flash",
     messages: messages,
     temperature: 0.2,
-    max_tokens: 3500,
+    max_tokens: 1024,
   };
 
   return await makeApiRequest(requestBody);

@@ -6,10 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api/nvidia': {
-        target: 'https://integrate.api.nvidia.com',
+      '/api/gemini': {
+        target: 'https://generativelanguage.googleapis.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/nvidia/, '')
+        rewrite: (path) => path.replace(/^\/api\/gemini/, '')
       }
     }
   }

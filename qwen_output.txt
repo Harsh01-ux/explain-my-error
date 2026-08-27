@@ -1,0 +1,13 @@
+<think>
+Some thinking...
+</think>
+
+### What Went Wrong
+Text 1
+
+### Why This Happens
+Text 2
+
+### How to Fix It
+Text 3
+
