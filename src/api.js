@@ -82,7 +82,7 @@ export const explainError = async (errorMessage, codeSnippet, language, explanat
       { role: "user", content: userPrompt }
     ],
     temperature: 0.2,
-    max_tokens: 1024,
+    max_tokens: 4096,
   };
 
   return await makeApiRequest(requestBody);
@@ -93,15 +93,15 @@ export const sendFollowUpChat = async (messages) => {
     model: "gemini-3.6-flash",
     messages: messages,
     temperature: 0.2,
-    max_tokens: 1024,
+    max_tokens: 4096,
   };
 
   return await makeApiRequest(requestBody);
 };
 
 export const parseResponse = (text) => {
-  // Remove <think>...</think> reasoning blocks, even if unclosed
-  text = text.replace(/<think>[\s\S]*?(?:<\/think>|$)\n?/g, '');
+  // Remove <think>...</think> reasoning blocks, even if unclosed. Replace with a newline to prevent concatenating surrounding lines.
+  text = text.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '\n');
   
   if (text.trim() === "") {
     text = "The AI model was still thinking and ran out of time/tokens before it could write the final answer. Please try again.";
